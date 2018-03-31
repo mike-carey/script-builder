@@ -9,12 +9,12 @@
 bin-builder() {
   BIN=${1:-bin}
   LIB=${2:-lib}
-  SH=${3:-.sh}
+  EXT=${3:-.sh}
 
   mkdir -p "$BIN"
-  for i in $( cd "$LIB" && ls *.sh ); do
-    echo "Linking '$BIN/${i/${SH}/}' -> '../$LIB/$i'"
-    $( cd "$BIN" && ln -fs ../"$LIB"/"$i" "${i/${SH}/}" )
+  for i in $( cd "$LIB" && ls *${EXT} ); do
+    echo "Linking '$BIN/${i/${EXT}/}' -> '../$LIB/$i'"
+    $( cd "$BIN" && ln -fs ../"$LIB"/"$i" "${i/${EXT}/}" )
   done
 }
 
