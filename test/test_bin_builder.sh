@@ -3,18 +3,49 @@
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../lib" && pwd )"/bin-builder.sh
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/mock.sh
 
+call() {
+  local _output=/dev/null
+  if [ ! -z ${TEST_VERBOSE+x} ]; then
+    _output=/dev/stdout
+  fi
+
+  pushd $__MOCKDIR__ > /dev/null
+    bin-builder > "$_output"
+  popd > /dev/null
+}
+
+###
+# Checks that an sh file under lib creates a symbolic link under bin
+##
 test_bin_builder_bin_gets_created() {
   local bin
 
   mock.init
-  mock.lib "test.sh"
+  mock.lib "foo.sh"
 
-  pushd $__MOCKDIR__ > /dev/null
-    bin-builder
-  popd > /dev/null
+  call
 
   assert "test -d $__MOCKDIR__/bin"
-  assert "test -h $__MOCKDIR__/bin/test"
+  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.sh'"
+
+  mock.deinit
+}
+
+###
+# Checks that a non sh file under lib does not created under bin
+##
+test_bin_builder_ignores_non_sh_by_default() {
+  local bin
+
+  mock.init
+  mock.lib "foo.sh"
+  mock.lib "bar.py"
+
+  call
+
+  assert "test -d $__MOCKDIR__/bin"
+  assert "test ! -h $__MOCKDIR__/bin/bar"
 
   mock.deinit
 }

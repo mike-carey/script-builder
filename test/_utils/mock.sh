@@ -8,7 +8,9 @@ export __OUTPUT__="$__TEST_DIR__"/_output
 mkdir -p "$__OUTPUT__"
 
 mock._log() {
-  echo "[MOCK] ${@}"
+  if [ ! -z ${MOCK_VERBOSE+x} ]; then
+    echo "[MOCK] ${@}" >&2
+  fi
 }
 
 ###
