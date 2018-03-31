@@ -1,0 +1,4 @@
+[submodule "bash-unit"]
+	path = vendor/bash-unit
+	url = https://github.com/pgrange/bash_unit.git
+	branch = master
