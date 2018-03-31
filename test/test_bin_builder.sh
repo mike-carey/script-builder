@@ -105,4 +105,23 @@ test_bin_builder_third_parameter_sets_ext() {
   mock.deinit
 }
 
+
+###
+# Bins get overriden if already existing
+##
+test_bin_builder_third_parameter_sets_ext() {
+  local bin
+
+  mock.init
+  mock.lib "foo.py"
+
+  call "bin" "lib" ".py"
+
+  assert "test -d $__MOCKDIR__/bin"
+  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.py'"
+
+  mock.deinit
+}
+
 # builder test
