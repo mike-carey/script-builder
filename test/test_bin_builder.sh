@@ -5,7 +5,6 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/mock.sh
 
 call() {
   local _args
-  local _output=/dev/null
   local _error=0
 
   while : ; do
@@ -26,15 +25,11 @@ call() {
 
   _args="${@}"
 
-  if [ ! -z ${TEST_VERBOSE+x} ]; then
-    _output=/dev/stdout
-  fi
-
   pushd $__MOCKDIR__ > /dev/null
     if [ $_error -ne 0 ]; then
       assert_fails "bin-builder $_args"
     else
-      bin-builder $_args > "$_output"
+      assert "bin-builder $_args"
     fi
   popd > /dev/null
 }
@@ -43,8 +38,6 @@ call() {
 # Checks that an sh file under lib creates a symbolic link under bin
 ##
 test_bin_builder_bin_gets_created() {
-  local bin
-
   mock.init
   mock.lib "foo.sh"
 
@@ -61,8 +54,6 @@ test_bin_builder_bin_gets_created() {
 # Checks that a non sh file under lib does not created under bin
 ##
 test_bin_builder_ignores_non_sh_by_default() {
-  local bin
-
   mock.init
   mock.lib "foo.sh"
   mock.lib "bar.py"
@@ -79,8 +70,6 @@ test_bin_builder_ignores_non_sh_by_default() {
 # Checks that the first parameter changes the bin directory
 ##
 test_bin_builder_first_parameter_sets_bin() {
-  local bin
-
   mock.init
   mock.lib "foo.sh"
 
@@ -96,8 +85,6 @@ test_bin_builder_first_parameter_sets_bin() {
 # Checks that the second parameter changes the lib directory
 ##
 test_bin_builder_second_parameter_sets_lib() {
-  local bin
-
   mock.init
   mock.dir "_lib" "foo.sh"
 
@@ -114,8 +101,6 @@ test_bin_builder_second_parameter_sets_lib() {
 # Checks that the third parameter changes the sh extension
 ##
 test_bin_builder_third_parameter_sets_ext() {
-  local bin
-
   mock.init
   mock.lib "foo.py"
 
@@ -132,8 +117,6 @@ test_bin_builder_third_parameter_sets_ext() {
 # Bins will be overwritten if already existing and force flag is set
 ##
 test_bin_builder_force_set_to_true() {
-  local bin
-
   mock.init
   mock.lib "foo.sh"
   mock.bin "foo"
@@ -150,8 +133,6 @@ test_bin_builder_force_set_to_true() {
 # Bins do not need to be overwritten if the link is the desired link to set
 ##
 test_bin_builder_force_is_not_set_but_link_already_exists() {
-  local bin
-
   mock.init
   mock.lib "foo.sh"
   mock.bin
@@ -170,8 +151,6 @@ test_bin_builder_force_is_not_set_but_link_already_exists() {
 # Bins need to be overwritten if the link is not the desired link to set
 ##
 test_bin_builder_force_is_not_set_but_different_link_already_exists() {
-  local bin
-
   mock.init
   mock.lib "foo.sh"
   mock.lib "bar.sh"
@@ -191,8 +170,6 @@ test_bin_builder_force_is_not_set_but_different_link_already_exists() {
 # Bins will be overwritten if force is set
 ##
 test_bin_builder_force_is_set_and_different_link_already_exists() {
-  local bin
-
   mock.init
   mock.lib "foo.sh"
   mock.lib "bar.sh"
