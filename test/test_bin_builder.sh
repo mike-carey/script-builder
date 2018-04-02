@@ -4,15 +4,38 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../lib" && pwd )"/bin-builder.sh
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/mock.sh
 
 call() {
-  local _args="${@}"
+  local _args
   local _output=/dev/null
+  local _error=0
+
+  while : ; do
+    case "$1" in
+      -e | --error )
+        _error=1
+        shift
+        ;;
+      -- )
+        shift
+        break
+        ;;
+      * )
+        break
+        ;;
+    esac
+  done
+
+  _args="${@}"
 
   if [ ! -z ${TEST_VERBOSE+x} ]; then
     _output=/dev/stdout
   fi
 
   pushd $__MOCKDIR__ > /dev/null
-    bin-builder $@ > "$_output"
+    if [ $_error -ne 0 ]; then
+      assert_fails bin-builder $@
+    else
+      bin-builder $@ > "$_output"
+    fi
   popd > /dev/null
 }
 
@@ -28,7 +51,7 @@ test_bin_builder_bin_gets_created() {
   call
 
   assert "test -d $__MOCKDIR__/bin"
-  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test -L $__MOCKDIR__/bin/foo"
   assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.sh'"
 
   mock.deinit
@@ -47,7 +70,7 @@ test_bin_builder_ignores_non_sh_by_default() {
   call
 
   assert "test -d $__MOCKDIR__/bin"
-  assert "test ! -h $__MOCKDIR__/bin/bar"
+  assert "test ! -L $__MOCKDIR__/bin/bar"
 
   mock.deinit
 }
@@ -64,7 +87,7 @@ test_bin_builder_first_parameter_sets_bin() {
   call "_bin"
 
   assert "test -d $__MOCKDIR__/_bin"
-  assert "test -h $__MOCKDIR__/_bin/foo"
+  assert "test -L $__MOCKDIR__/_bin/foo"
 
   mock.deinit
 }
@@ -81,7 +104,7 @@ test_bin_builder_second_parameter_sets_lib() {
   call "bin" "_lib"
 
   assert "test -d $__MOCKDIR__/bin"
-  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test -L $__MOCKDIR__/bin/foo"
   assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../_lib/foo.sh'"
 
   mock.deinit
@@ -99,7 +122,7 @@ test_bin_builder_third_parameter_sets_ext() {
   call "bin" "lib" ".py"
 
   assert "test -d $__MOCKDIR__/bin"
-  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test -L $__MOCKDIR__/bin/foo"
   assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.py'"
 
   mock.deinit
@@ -109,17 +132,35 @@ test_bin_builder_third_parameter_sets_ext() {
 ###
 # Bins get overriden if already existing
 ##
-test_bin_builder_third_parameter_sets_ext() {
+test_bin_builder_force_set_to_false_by_default() {
   local bin
 
   mock.init
-  mock.lib "foo.py"
+  mock.lib "foo.sh"
+  mock.bin "foo"
 
-  call "bin" "lib" ".py"
+  call --error
 
-  assert "test -d $__MOCKDIR__/bin"
-  assert "test -h $__MOCKDIR__/bin/foo"
-  assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.py'"
+  assert "test ! -L $__MOCKDIR__/bin/foo"
+  assert "test \"$(cat $__MOCKDIR__/bin/foo)\" = \"\""
+
+  mock.deinit
+}
+
+###
+# Bins get overriden if already existing
+##
+test_bin_builder_force_set_to_true() {
+  local bin
+
+  mock.init
+  mock.lib "foo.sh"
+  mock.bin "foo"
+
+  call --force
+
+  assert "test -L $__MOCKDIR__/bin/foo"
+  assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.sh'"
 
   mock.deinit
 }

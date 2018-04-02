@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 ###
 # Parameters:
 #   1 {directory=bin} The directory to place links into
@@ -41,13 +43,27 @@ bin-builder() {
   for i in $( cd "$LIB" && ls *${EXT} ); do
     local _bin="$BIN/${i/${EXT}/}"
     local _lib="../$LIB/$i"
-    echo "Linking '$_bin' -> '$_lib'"
-    if [ $FORCE -ne 0 -a ! [ -h "$_bin" -o "$( readlink -- "$_bin" )" != "$_lib" ] ]; then
-      echo "Cowardly refusing to overwrite '$_bin'" >&2
-      return 3
+
+    # It exists
+    if [ -e "$_bin" ]; then
+      # It is not the symlink desired
+      if [ ! -h "$_bin" -a "$( readlink -- "$_bin" )" != "$_lib" ]; then
+        # Cannot force it
+        if [ $FORCE -ne 0 ]; then
+          echo "Cowardly refusing to overwrite '$_bin'" >&2
+          return 2
+        # else
+        #   echo "Forcing"
+        fi
+      # else
+      #   echo "Link is correct"
+      fi
+    # else
+    #   echo "Bin ($_bin) is not real"
     fi
 
-    $( cd "$BIN" && ln -fs "$_lib" "${_bin/${BIN}/}" )
+    echo "Linking '$_bin' -> '$_lib'"
+    $( cd "$BIN" && ln -fs "$_lib" "${_bin/${BIN}\//}" )
   done
 }
 
