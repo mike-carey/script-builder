@@ -136,7 +136,7 @@ test_bin-builder_force_is_not_set_but_different_link_already_exists() {
 
   $( cd $MOCKDIR && ln -s ../lib/bar.sh foo )
 
-  call --error bin-builder
+  call +error bin-builder
 
   assert "test -h $__MOCKDIR__/bin/foo"
   assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/bar.sh'"
