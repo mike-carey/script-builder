@@ -47,7 +47,7 @@ bin-builder() {
     # It exists
     if [ -e "$_bin" ]; then
       # It is not the symlink desired
-      if [ ! -h "$_bin" -a "$( readlink -- "$_bin" )" != "$_lib" ]; then
+      if [ ! -h "$_bin" -o "$( readlink -- "$_bin" )" != "$_lib" ]; then
         # Cannot force it
         if [ $FORCE -ne 0 ]; then
           echo "Cowardly refusing to overwrite '$_bin'" >&2

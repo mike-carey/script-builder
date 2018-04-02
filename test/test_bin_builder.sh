@@ -32,9 +32,9 @@ call() {
 
   pushd $__MOCKDIR__ > /dev/null
     if [ $_error -ne 0 ]; then
-      assert_fails bin-builder $@
+      assert_fails "bin-builder $_args"
     else
-      bin-builder $@ > "$_output"
+      bin-builder $_args > "$_output"
     fi
   popd > /dev/null
 }
@@ -128,27 +128,8 @@ test_bin_builder_third_parameter_sets_ext() {
   mock.deinit
 }
 
-
 ###
-# Bins get overriden if already existing
-##
-test_bin_builder_force_set_to_false_by_default() {
-  local bin
-
-  mock.init
-  mock.lib "foo.sh"
-  mock.bin "foo"
-
-  call --error
-
-  assert "test ! -L $__MOCKDIR__/bin/foo"
-  assert "test \"$(cat $__MOCKDIR__/bin/foo)\" = \"\""
-
-  mock.deinit
-}
-
-###
-# Bins get overriden if already existing
+# Bins will be overwritten if already existing and force flag is set
 ##
 test_bin_builder_force_set_to_true() {
   local bin
@@ -159,8 +140,49 @@ test_bin_builder_force_set_to_true() {
 
   call --force
 
-  assert "test -L $__MOCKDIR__/bin/foo"
+  assert "test -h $__MOCKDIR__/bin/foo"
   assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.sh'"
+
+  mock.deinit
+}
+
+###
+# Bins do not need to be overwritten if the link is the desired link to set
+##
+test_bin_builder_force_is_not_set_but_link_already_exists() {
+  local bin
+
+  mock.init
+  mock.lib "foo.sh"
+  mock.bin
+
+  $( cd $MOCKDIR && ln -s ../lib/foo.sh )
+
+  call
+
+  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.sh'"
+
+  mock.deinit
+}
+
+###
+# Bins do not need to be overwritten if the link is the desired link to set
+##
+test_bin_builder_force_is_not_set_but_different_link_already_exists() {
+  local bin
+
+  mock.init
+  mock.lib "foo.sh"
+  mock.lib "bar.sh"
+  mock.bin
+
+  $( cd $MOCKDIR && ln -s ../lib/bar.sh foo )
+
+  call --error
+
+  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/bar.sh'"
 
   mock.deinit
 }
