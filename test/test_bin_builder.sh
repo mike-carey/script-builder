@@ -167,7 +167,7 @@ test_bin_builder_force_is_not_set_but_link_already_exists() {
 }
 
 ###
-# Bins do not need to be overwritten if the link is the desired link to set
+# Bins need to be overwritten if the link is not the desired link to set
 ##
 test_bin_builder_force_is_not_set_but_different_link_already_exists() {
   local bin
@@ -183,6 +183,27 @@ test_bin_builder_force_is_not_set_but_different_link_already_exists() {
 
   assert "test -h $__MOCKDIR__/bin/foo"
   assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/bar.sh'"
+
+  mock.deinit
+}
+
+###
+# Bins will be overwritten if force is set
+##
+test_bin_builder_force_is_set_and_different_link_already_exists() {
+  local bin
+
+  mock.init
+  mock.lib "foo.sh"
+  mock.lib "bar.sh"
+  mock.bin
+
+  $( cd $MOCKDIR && ln -s ../lib/bar.sh foo )
+
+  call --force
+
+  assert "test -h $__MOCKDIR__/bin/foo"
+  assert "test '$( readlink -- $__MOCKDIR__/bin/foo )' = '../lib/foo.sh'"
 
   mock.deinit
 }
