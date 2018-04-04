@@ -31,6 +31,7 @@ mock.init() {
 mock.dir() {
   local _dir="$1"
   local _filename="$2"
+  local _content="${@:3}"
 
   export MOCKDIR="$__MOCKDIR__"/"$_dir"
 
@@ -40,27 +41,48 @@ mock.dir() {
 
     mock._log "Created file: $MOCKFILE"
     touch "$MOCKFILE"
+
+    if [ -n "$_content" ]; then
+      mock._log "Adding content to $MOCKFILE"
+      echo -e "$_content" > "$MOCKFILE"
+    fi
   fi
 }
 
 mock.bin() {
-  mock.dir bin "$1"
+  mock.dir bin $@
 }
 
 mock.lib() {
-  mock.dir lib "$1"
+  mock.dir lib $@
 }
 
 mock.man() {
-  mock.dir man "$1"
+  mock.dir man $@
 }
 
 mock.util() {
-  mock.dir util "$1"
+  mock.dir util $@
 }
 
 mock.deinit() {
   unset __MOCKDIR__
+}
+
+mock.pushd() {
+  pushd $__MOCKDIR__ > /dev/null
+}
+
+mock.popd() {
+  popd > /dev/null
+}
+
+mock.is_initialized() {
+  if [ -z ${__MOCKDIR__+x} ]; then
+    return 1
+  fi
+
+  return 0
 }
 
 export -f mock._log \
@@ -70,6 +92,9 @@ export -f mock._log \
           mock.lib \
           mock.man \
           mock.util \
-          mock.deinit
+          mock.deinit \
+          mock.pushd \
+          mock.popd \
+          mock.is_initialized
 
 # test.mock

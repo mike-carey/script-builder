@@ -6,6 +6,7 @@ call() {
   local _assert
   local _error=0
   local _message=""
+  local _expression
 
   while : ; do
     case "$1" in
@@ -16,6 +17,11 @@ call() {
         ;;
       +error )
         _error=1
+        shift
+        ;;
+      +expression )
+        _expression="$2"
+        shift
         shift
         ;;
       +function )
@@ -40,8 +46,8 @@ call() {
 
   _args="${@}"
 
-  if [ ! -z ${__MOCKDIR__+x} ]; then
-    pushd $__MOCKDIR__ > /dev/null
+  if mock.is_initialized ; then
+    mock.pushd
   fi
 
     if [ $_error -ne 0 ]; then
@@ -49,16 +55,21 @@ call() {
     elif [ ! -z "$_fn" ]; then
       $_fn $_args
     elif [ ! -z "$_assert" ]; then
+      "$_assert" \
+        "$_args" \
+        "$_expression" \
+        "$_message"
+    elif [ ! -z "$_expression" ]; then
       _assert_expression \
         "$_args" \
-        "$_assert" \
+        "$_expression" \
         "$_message"
     else
       assert "$_args" "$_message"
     fi
 
-  if [ ! -z ${__MOCKDIR__+x} ]; then
-    popd > /dev/null
+  if mock.is_initialized ; then
+    mock.popd
   fi
 }
 
