@@ -146,7 +146,44 @@ test_builder_no_params_and_lib_exists_but_empty() {
     builder
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
-    assert "test '${BUILDER_DIST_FILES[@]}' = ''" 'BUILDER_DIST_FILES is not empty'
+    assert "test '${BUILDER_DIST_FILES}' = ''" 'BUILDER_DIST_FILES is not empty'
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# No parameters are passed in, lib exists, but has one result in a list of one BUILDER_DIST_FILES
+##
+test_builder_no_params_and_lib_exists_with_one_file() {
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+
+  mock.pushd
+    builder
+
+    assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
+    assert "test '${BUILDER_DIST_FILES}' = 'dist/lib/foo.sh'" 'BUILDER_DIST_FILES does not have the one entry'
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# No parameters are passed in, lib exists, but has one result in a list of one BUILDER_DIST_FILES
+##
+test_builder_no_params_and_lib_exists_with_two_files() {
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+  mock.lib "bar.sh" "bar"
+
+  mock.pushd
+    builder
+
+    assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
+    assert "test '${BUILDER_DIST_FILES}' = 'dist/lib/bar.sh dist/lib/foo.sh'" 'BUILDER_DIST_FILES does not have the two entries'
   mock.popd
 
   mock.deinit
