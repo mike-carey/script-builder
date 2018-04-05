@@ -23,6 +23,12 @@
 #   -- {boolean} Indicates the end of arguments.
 ##
 builder() {
+  builder._log() {
+    if [ -n "${BUILDER_VERBOSE+x}" ]; then
+      echo -e "[DEBUG](builder) $@" >&2
+    fi
+  }
+
   local _dist="${BUILDER_DIST:-dist}"
   local _util="${BUILDER_UTIL:-util}"
   local _lib="${BUILDER_LIB:-lib}"
@@ -67,7 +73,7 @@ builder() {
   done
 
   if [[ "$@" = \- ]]; then
-    if [[ -z "$_single_file" ]]; then
+    if [ -z "$_single_file" ]; then
       _single_file='-'
     fi
 
@@ -93,42 +99,44 @@ builder() {
         echo "Please set the lib directory via \`--lib\` option or the \`BUILDER_LIB\` variable"
       } >&2
       return 4
-    # else
-    #   echo "'$_lib' is a directory"
+    else
+      builder._log "'$_lib' is a directory"
     fi
 
     _files=($( builder.find "$_lib" "*$_ext" ))
-  # else
-  #   echo "Files were provided: '${_files[@]}'" >&2
+  else
+    builder._log "Files were provided: '${_files[@]}'"
   fi
 
   mkdir -p "$_dist"
 
   if [ -n "$_single_file" ]; then
-    # echo "Single file: '$_single_file'" >&2
+    builder._log "Single file: '$_single_file'"
 
     concat "$_single_file" ${_utils[@]} ${_files[@]}
     chmod +x "$_single_file"
 
+    builder._log "Exporting BUILDER_DIST_FILE='${_single_file}'"
     export BUILDER_DIST_FILE="$_single_file"
 
     echo "$BUILDER_DIST_FILE"
   else
-    # echo "Not single file" >&2
+    builder._log "Not single file"
 
     mkdir -p "$_dist"
 
-    declare -a BUILDER_DIST_FILES=()
+    local -a _dist_files=()
     for _file in ${_files[@]}; do
       concat "$_dist"/"$_file" ${_utils[@]} "$_file"
       chmod +x "$_dist"/"$_file"
 
-      BUILDER_DIST_FILES+=("$_file")
+      _dist_files+=("$_dist"/"$_file")
     done
 
-    export BUILDER_DIST_FILES
+    builder._log "Exporting BUILDER_DIST_FILES='${_dist_files[@]}'"
+    export BUILDER_DIST_FILES="${_dist_files[@]}"
 
-    echo "${BUILDER_DIST_FILES[@]}"
+    echo "$BUILDER_DIST_FILES"
   fi
 
   return 0
