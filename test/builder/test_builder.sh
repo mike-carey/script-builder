@@ -13,6 +13,13 @@ setup() {
     unset BUILDER_DIST_FILES
   fi
   builder.find() { echo ''; }
+  concat() {
+    if [ -z "${@:2}" ]; then
+      touch $1
+    else
+      cat ${@:2} > $1
+    fi
+  }
 }
 
 ###
@@ -45,13 +52,49 @@ test_builder_BUILDER_DIST_FILES_variable_is_exported() {
 
 ###
 # No parameters passed in and no lib directory should error
+
 ##
 test_builder_no_params_and_no_lib() {
   mock.init
-
-  export -f builder.find
 
   call +error builder
 
   mock.deinit
 }
+
+test_builder_-() {
+  local _content='foo'
+
+  mock.init
+
+  mock.lib "foo.sh" "$_content"
+
+  builder.find() {
+    if [ "$1" = "lib" ]; then
+      echo 'lib/foo.sh'
+    else
+      echo ''
+    fi
+  }
+
+  mock.pushd
+    builder -
+
+    assert "test -n '$BUILDER_DIST_FILE'" "BUILDER_DIST_FILE is not set"
+    assert "test -f $BUILDER_DIST_FILE" "'$BUILDER_DIST_FILE' is not a file"
+    assert "test '$(cat $BUILDER_DIST_FILE)' = 'foo'" "Contents of '$BUILDER_DIST_FILE' do not match"
+  mock.popd
+
+  mock.deinit
+}
+
+# ###
+# #
+# ##
+# test_builder_no_params_and_lib_exists_but_empty() {
+#   mock.init
+#
+#   call +error builder
+#
+#   mock.deinit
+# }

@@ -68,16 +68,15 @@ builder() {
 
   if [[ "$@" = \- && -z "$_single_file" ]]; then
     # We will generate a random name
-    echo "Creating a random name for single file"
-    _single_file="$_dist/$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1).$_ext"
+    # echo "Creating a random name for single file" >&2
+    _single_file="$_dist/$( cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 )$_ext"
 
     # Take the '-' off the params
     shift
   fi
-  set -x
 
-  local -a _files='('"$@"')'
-  local -a _utils='('$( builder.find - "$_util" "*$_ext" )')'
+  local -a _files=($@)
+  local -a _utils=($( builder.find "$_util" "*$_ext" ))
 
   if [ ${#_files[@]} -eq 0 ]; then
     if [ ! -d $_lib ]; then
@@ -86,17 +85,29 @@ builder() {
         echo "Please set the lib directory via \`--lib\` option or the \`BUILDER_LIB\` variable"
       } >&2
       return 4
+    # else
+    #   echo "'$_lib' is a directory"
     fi
 
-    _files=($( builder.find - "$_lib" "*$_ext" ))
+    _files=($( builder.find "$_lib" "*$_ext" ))
+  # else
+  #   echo "Files were provided: '${_files[@]}'" >&2
   fi
 
-  if [ -z "$_single_file" ]; then
+  mkdir -p "$_dist"
+
+  if [ -n "$_single_file" ]; then
+    # echo "Single file: '$_single_file'" >&2
+
     concat "$_single_file" ${_utils[@]} ${_files[@]}
     chmod +x "$_single_file"
 
     export BUILDER_DIST_FILE="$_single_file"
+
+    echo "$BUILDER_DIST_FILE"
   else
+    # echo "Not single file" >&2
+
     mkdir -p "$_dist"
 
     declare -a BUILDER_DIST_FILES=()
@@ -108,6 +119,8 @@ builder() {
     done
 
     export BUILDER_DIST_FILES
+
+    echo "${BUILDER_DIST_FILES[@]}"
   fi
 
   return 0
