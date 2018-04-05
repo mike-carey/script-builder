@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../lib" && pwd )"/bin-builder.sh
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/call.sh
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/mock.sh
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"/src/bin-builder/bin-builder.sh
+
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/call.sh
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/mock.sh
 
 ###
 # Checks that an sh file under lib creates a symbolic link under bin

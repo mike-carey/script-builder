@@ -2,9 +2,10 @@
 
 fake hash '{ return 0; }'
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../lib" && pwd )"/builder.sh
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/call.sh
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/mock.sh
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"/src/builder/builder.find.sh
+
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/call.sh
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/mock.sh
 
 setup_suite() {
   declare -a var=()

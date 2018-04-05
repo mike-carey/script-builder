@@ -82,11 +82,5 @@ if [[ ${BASH_SOURCE[0]} != $0 ]]; then
 else
     {{FUNCTION}} "${@}";
     exit $?;
-fi;
-if [[ ${BASH_SOURCE[0]} != $0 ]]; then
-    export -f concat;
-else
-    {{FUNCTION}} "${@}";
-    exit $?;
 fi
 

@@ -2,41 +2,33 @@
 # Project aliases
 ##
 
-BIN = bin
-DIST = dist
-LIB = lib
-TEST = test
-VENDOR = vendor
+UTIL = util
 
-VENDOR_BIN = $(VENDOR)/.bin
+UTILS = $(shell echo $(wildcard $(UTIL)/*.sh) | sed 's/'$(UTIL)'\///g' | sed 's/.sh//g' )
 
-BASH_UNIT = $(VENDOR_BIN)/bash-unit
-
-.PHONY: default bin help test vendor
+.PHONY: default help *
 
 # Make help default
 default: help
 .DEFAULT_GOAL := help
 
-bin:
-	@ $(LIB)/bin-builder.sh
-# bin
-
 help:
 	@ echo "Usage: make <command> where command is one of the following:"
-	@ echo "  bin         Creates links in bin for each lib script"
 	@ echo "  help        Prints this message"
-	@ echo "  test        Runs unit tests"
 	@ echo "  vendor      Updates the submodules in the vendor directory"
+	@ for i in $(UTILS) ; do printf '  %-10s  %s\n' "$$i" "Runs the $(UTIL)/$$i.sh script"; done
 	@ echo
 # help
-
-test:
-	@ $(BASH_UNIT) test/test_*.sh
-# test
 
 vendor:
 	@ git submodule update --init --remote --force --recursive --
 # vendor
+
+$(UTILS):
+ifeq (,$(wildcard $(UTIL)/$(@)))
+	$(error Could not find proper util)
+endif
+	@ $(UTIL)/$(@).sh
+# %
 
 # builder

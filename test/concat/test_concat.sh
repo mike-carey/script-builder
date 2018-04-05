@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../lib" && pwd )"/concat.sh
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/call.sh
-source "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/_utils/mock.sh
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"/src/concat/concat.sh
+
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/call.sh
+source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/mock.sh
 
 ###
 # Checks that the output path is provided
 ##
-test_builder_required_output_file() {
+test_concat_required_output_file() {
   mock.init
 
   call +error concat
@@ -18,7 +19,7 @@ test_builder_required_output_file() {
 ###
 # Checks that the input path is provided
 ##
-test_builder_required_input_files() {
+test_concat_required_input_files() {
   mock.init
 
   call +error concat "build.sh"
@@ -29,7 +30,7 @@ test_builder_required_input_files() {
 ###
 # Checks that the blob is not empty
 ##
-test_builder_blob_is_empty() {
+test_concat_blob_is_empty() {
   mock.init
 
   mock.lib "foo.sh"
@@ -42,7 +43,7 @@ test_builder_blob_is_empty() {
 ###
 # Checks that the content is in the file
 ##
-test_builder_output_is_created_with_content() {
+test_concat_output_is_created_with_content() {
   local _content="#!/usr/bin/env bash\n\nfunction foo() {\necho \"foo\"\n}"
 
   mock.init
@@ -69,7 +70,7 @@ test_builder_output_is_created_with_content() {
 ###
 # Checks that the content is in the file
 ##
-test_builder_output_is_created_with_all_content() {
+test_concat_output_is_created_with_all_content() {
   local _foo_content="#!/usr/bin/env bash\n\nfunction foo() {\necho \"foo\"\n}"
   local _bar_content="#!/usr/bin/env bash\n\nfunction bar() {\necho \"bar\"\n}"
 
