@@ -188,3 +188,40 @@ test_builder_no_params_and_lib_exists_with_two_files() {
 
   mock.deinit
 }
+
+###
+# One parameter is passed in and the single-file flag was not set
+##
+test_builder_one_param_without_single_file_flag() {
+  mock.init
+
+  mock.bin "foo.sh" "foo"
+
+  mock.pushd
+    builder "bin/foo.sh"
+
+    assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
+    assert "test '${BUILDER_DIST_FILES}' = 'dist/bin/foo.sh'" 'BUILDER_DIST_FILES does not have the two entries'
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Parameters are passed in and the single-file flag was not set
+##
+test_builder_one_param_without_single_file_flag() {
+  mock.init
+
+  mock.bin "foo.sh" "foo"
+  mock.bin "bar.sh" "bar"
+
+  mock.pushd
+    builder "bin/bar.sh" "bin/foo.sh"
+
+    assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
+    assert "test '${BUILDER_DIST_FILES}' = 'dist/bin/bar.sh dist/bin/foo.sh'" 'BUILDER_DIST_FILES does not have the two entries'
+  mock.popd
+
+  mock.deinit
+}
