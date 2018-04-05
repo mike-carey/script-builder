@@ -61,6 +61,10 @@ mock.man() {
   mock.dir man $@
 }
 
+mock.src() {
+  mock.dir src $@
+}
+
 mock.tmp() {
   mock.dir tmp $@
 }

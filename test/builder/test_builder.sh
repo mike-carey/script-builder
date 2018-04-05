@@ -16,7 +16,7 @@ setup() {
     if [ ! -d "$1" ]; then
       echo ''
     else
-      echo $( find "$1" -name '*.sh' )
+      echo $( find "$1" -name "*${BUILDER_EXT:-.sh}" )
     fi
   }
   concat() {
@@ -253,6 +253,100 @@ test_builder_params_with_single_file_flag_as_-() {
 
   mock.pushd
     builder --single-file - "bin/foo.sh" "bin/bar.sh" > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the util directory via environment changes dist destination.
+##
+test_builder_change_dist_directory_via_environment_variable() {
+  local _dest=out
+
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+  mock.lib "bar.sh" "bar"
+
+  mock.pushd
+    BUILDER_DIST="$_dest" builder - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "test '$( dirname "$BUILDER_DIST_FILE" )' = '$_dest'" "Directory ($( dirname "$BUILDER_DIST_FILE" )) is not '$_dest'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the util directory via environment changes ext checks.
+##
+test_builder_change_ext_directory_via_environment_variable() {
+  local _ext=.py
+
+  mock.init
+
+  mock.lib "foo.py" "foo"
+  mock.lib "bar.py" "bar"
+
+  mock.tmp "expected" "bar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    BUILDER_EXT="$_ext" builder - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the lib directory via environment changes lib loading.
+##
+test_builder_change_lib_directory_via_environment_variable() {
+  local _lib=src
+
+  mock.init
+
+  mock.src "foo.sh" "foo"
+  mock.src "bar.sh" "bar"
+
+  mock.tmp "expected" "bar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    BUILDER_LIB="$_lib" builder - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the util directory via environment changes util loading.
+##
+test_builder_change_util_directory_via_environment_variable() {
+  local _util=lib-exec
+
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+  mock.lib "bar.sh" "bar"
+  mock.dir lib-exec "util.sh" "util"
+
+  mock.tmp "expected" "util\nbar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    BUILDER_UTIL="$_util" builder - > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
     assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
