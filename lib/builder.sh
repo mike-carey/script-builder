@@ -1,13 +1,19 @@
 #!/usr/bin/env bash 
-function builder () 
-{ 
+function builder ()
+{
+    function builder._log ()
+    {
+        if [ -n "${BUILDER_VERBOSE+x}" ]; then
+            echo -e "[DEBUG](builder) $@" 1>&2;
+        fi
+    };
     local _dist="${BUILDER_DIST:-dist}";
     local _util="${BUILDER_UTIL:-util}";
     local _lib="${BUILDER_LIB:-lib}";
     local _ext="${BUILDER_EXT:-.sh}";
     local _single_file=;
     while :; do
-        case "$1" in 
+        case "$1" in
             --dist)
                 _dist="$2";
                 shift;
@@ -43,7 +49,7 @@ function builder ()
         esac;
     done;
     if [[ "$@" = \- ]]; then
-        if [[ -z "$_single_file" ]]; then
+        if [ -z "$_single_file" ]; then
             _single_file='-';
         fi;
         shift;
@@ -57,36 +63,44 @@ function builder ()
     local -a _utils=($( builder.find "$_util" "*$_ext" ));
     if [ ${#_files[@]} -eq 0 ]; then
         if [ ! -d $_lib ]; then
-            { 
+            {
                 echo "When no files are provided, the lib directory is required";
                 echo "Please set the lib directory via \`--lib\` option or the \`BUILDER_LIB\` variable"
             } 1>&2;
             return 4;
+        else
+            builder._log "'$_lib' is a directory";
         fi;
         _files=($( builder.find "$_lib" "*$_ext" ));
+    else
+        builder._log "Files were provided: '${_files[@]}'";
     fi;
     mkdir -p "$_dist";
     if [ -n "$_single_file" ]; then
+        builder._log "Single file: '$_single_file'";
         concat "$_single_file" ${_utils[@]} ${_files[@]};
         chmod +x "$_single_file";
+        builder._log "Exporting BUILDER_DIST_FILE='${_single_file}'";
         export BUILDER_DIST_FILE="$_single_file";
         echo "$BUILDER_DIST_FILE";
     else
+        builder._log "Not single file";
         mkdir -p "$_dist";
-        declare -a BUILDER_DIST_FILES=();
+        local -a _dist_files=();
         for _file in ${_files[@]};
         do
             concat "$_dist"/"$_file" ${_utils[@]} "$_file";
             chmod +x "$_dist"/"$_file";
-            BUILDER_DIST_FILES+=("$_file");
+            _dist_files+=("$_dist"/"$_file");
         done;
-        export BUILDER_DIST_FILES;
-        echo "${BUILDER_DIST_FILES[@]}";
+        builder._log "Exporting BUILDER_DIST_FILES='${_dist_files[@]}'";
+        export BUILDER_DIST_FILES="${_dist_files[@]}";
+        echo "$BUILDER_DIST_FILES";
     fi;
     return 0
 };
-function builder.find () 
-{ 
+function builder.find ()
+{
     local _dir="$1";
     local _name="$2";
     if [ -z "$_dir" -o -z "$_name" ]; then
@@ -103,10 +117,10 @@ function builder.find ()
     echo "${_value[@]}";
     return 0
 };
-function concat () 
-{ 
-    function concat.usage () 
-    { 
+function concat ()
+{
+    function concat.usage ()
+    {
         echo "Usage: concat [--comment] OUTPUT INPUT...";
         echo "  --comment   Adds comments";
         echo "  OUPUT       The output file";
@@ -114,7 +128,7 @@ function concat ()
     };
     local _comment=1;
     while :; do
-        case "$1" in 
+        case "$1" in
             --comment)
                 _comment=0;
                 shift
@@ -193,4 +207,3 @@ else
     {{FUNCTION}} "${@}";
     exit $?;
 fi
-
