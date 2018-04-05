@@ -262,6 +262,50 @@ test_builder_params_with_single_file_flag_as_-() {
 }
 
 ###
+# Checks that the util directory is imported into the concat when present
+##
+test_builder_pulls_in_util_directory_with_-() {
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+  mock.util "bar.sh" "bar"
+
+  mock.tmp "expected" "bar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    builder - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that the util directory is imported into the concat when present
+##
+test_builder_pulls_in_util_directory_with_params_passed() {
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+  mock.util "bar.sh" "bar"
+
+  mock.tmp "expected" "bar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    builder --single-file - "lib/foo.sh" > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
 # Checks that changing the util directory via environment changes dist destination.
 ##
 test_builder_change_dist_directory_via_environment_variable() {
