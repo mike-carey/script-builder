@@ -61,6 +61,10 @@ mock.man() {
   mock.dir man $@
 }
 
+mock.tmp() {
+  mock.dir tmp $@
+}
+
 mock.util() {
   mock.dir util $@
 }

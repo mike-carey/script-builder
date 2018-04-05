@@ -21,7 +21,7 @@ setup() {
   }
   concat() {
     mkdir -p "$( dirname "$1" )"
-    if [ -z "${@:2}" ]; then
+    if [[ -z "${@:2}" ]]; then
       touch $1
     else
       cat ${@:2} > $1
@@ -38,7 +38,7 @@ test_builder_BUILDER_DIST_FILE_variable_is_exported() {
   mock.lib
 
   mock.pushd
-    builder "-"
+    builder "-" > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
   mock.popd
@@ -55,7 +55,7 @@ test_builder_BUILDER_DIST_FILES_variable_is_exported() {
   mock.lib "build.sh"
 
   mock.pushd
-    builder "lib/build.sh"
+    builder "lib/build.sh" > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
   mock.popd
@@ -84,16 +84,8 @@ test_builder_-() {
 
   mock.lib "foo.sh" "$_content"
 
-  builder.find() {
-    if [ "$1" = "lib" ]; then
-      echo 'lib/foo.sh'
-    else
-      echo ''
-    fi
-  }
-
   mock.pushd
-    builder -
+    builder - > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILE+x}'" "BUILDER_DIST_FILE is not set"
     assert "test -f $BUILDER_DIST_FILE" "'$BUILDER_DIST_FILE' is not a file"
@@ -114,16 +106,8 @@ test_builder_single_file_provided_with_-() {
 
   mock.lib "foo.sh" "$_content"
 
-  builder.find() {
-    if [ "$1" = "lib" ]; then
-      echo 'lib/foo.sh'
-    else
-      echo ''
-    fi
-  }
-
   mock.pushd
-    builder --single-file "$_file" -
+    builder --single-file "$_file" - > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILE+x}'" "BUILDER_DIST_FILE is not set"
     assert "test '$BUILDER_DIST_FILE' = '$_file'"
@@ -143,7 +127,7 @@ test_builder_no_params_and_lib_exists_but_empty() {
   mock.lib
 
   mock.pushd
-    builder
+    builder > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
     assert "test '${BUILDER_DIST_FILES}' = ''" 'BUILDER_DIST_FILES is not empty'
@@ -161,7 +145,7 @@ test_builder_no_params_and_lib_exists_with_one_file() {
   mock.lib "foo.sh" "foo"
 
   mock.pushd
-    builder
+    builder > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
     assert "test '${BUILDER_DIST_FILES}' = 'dist/lib/foo.sh'" 'BUILDER_DIST_FILES does not have the one entry'
@@ -180,7 +164,7 @@ test_builder_no_params_and_lib_exists_with_two_files() {
   mock.lib "bar.sh" "bar"
 
   mock.pushd
-    builder
+    builder > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
     assert "test '${BUILDER_DIST_FILES}' = 'dist/lib/bar.sh dist/lib/foo.sh'" 'BUILDER_DIST_FILES does not have the two entries'
@@ -198,7 +182,7 @@ test_builder_one_param_without_single_file_flag() {
   mock.bin "foo.sh" "foo"
 
   mock.pushd
-    builder "bin/foo.sh"
+    builder "bin/foo.sh" > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
     assert "test '${BUILDER_DIST_FILES}' = 'dist/bin/foo.sh'" 'BUILDER_DIST_FILES does not have the two entries'
@@ -217,10 +201,55 @@ test_builder_one_param_without_single_file_flag() {
   mock.bin "bar.sh" "bar"
 
   mock.pushd
-    builder "bin/bar.sh" "bin/foo.sh"
+    builder "bin/bar.sh" "bin/foo.sh" > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
     assert "test '${BUILDER_DIST_FILES}' = 'dist/bin/bar.sh dist/bin/foo.sh'" 'BUILDER_DIST_FILES does not have the two entries'
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Parameters are passed in and the single-file flag was set
+##
+test_builder_params_with_single_file_flag() {
+  mock.init
+
+  mock.bin "foo.sh" "foo"
+  mock.bin "bar.sh" "bar"
+
+  mock.tmp "expected" "foo\nbar"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    builder --single-file "dist/baz.sh" "bin/foo.sh" "bin/bar.sh" > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "test '${BUILDER_DIST_FILE}' = 'dist/baz.sh'" 'BUILDER_DIST_FILE does not have the correct entry'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Parameters are passed in and the single-file flag was not set
+##
+test_builder_params_with_single_file_flag_as_-() {
+  mock.init
+
+  mock.bin "foo.sh" "foo"
+  mock.bin "bar.sh" "bar"
+
+  mock.tmp "expected" "foo\nbar"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    builder --single-file - "bin/foo.sh" "bin/bar.sh" > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
   mock.popd
 
   mock.deinit
