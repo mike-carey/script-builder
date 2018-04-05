@@ -27,7 +27,7 @@ builder() {
   local _util="${BUILDER_UTIL:-util}"
   local _lib="${BUILDER_LIB:-lib}"
   local _ext="${BUILDER_EXT:-.sh}"
-  local _single_file
+  local _single_file=
 
   while : ; do
     case "$1" in
@@ -66,16 +66,24 @@ builder() {
     esac
   done
 
-  if [[ "$@" = \- && -z "$_single_file" ]]; then
-    # We will generate a random name
-    # echo "Creating a random name for single file" >&2
-    _single_file="$_dist/$( cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 )$_ext"
+  if [[ "$@" = \- ]]; then
+    if [[ -z "$_single_file" ]]; then
+      _single_file='-'
+    fi
 
     # Take the '-' off the params
     shift
   fi
 
-  local -a _files=($@)
+  local _args="$@"
+
+  if [ "$_single_file" = \- ]; then
+    # Generate a random name
+    local _r=$( cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 )
+    _single_file="$_dist/$_r$_ext"
+  fi
+
+  local -a _files=($_args)
   local -a _utils=($( builder.find "$_util" "*$_ext" ))
 
   if [ ${#_files[@]} -eq 0 ]; then

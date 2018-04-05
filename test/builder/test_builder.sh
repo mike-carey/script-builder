@@ -88,6 +88,34 @@ test_builder_-() {
   mock.deinit
 }
 
+test_builder_single_file_provided_with_-() {
+  local _content='foo'
+  local _file='dist/build.sh'
+
+  mock.init
+
+  mock.lib "foo.sh" "$_content"
+
+  builder.find() {
+    if [ "$1" = "lib" ]; then
+      echo 'lib/foo.sh'
+    else
+      echo ''
+    fi
+  }
+
+  mock.pushd
+    builder --single-file "$_file" -
+
+    assert "test -n '$BUILDER_DIST_FILE'" "BUILDER_DIST_FILE is not set"
+    assert "test '$BUILDER_DIST_FILE' = '$_file'"
+    assert "test -f $BUILDER_DIST_FILE" "'$BUILDER_DIST_FILE' is not a file"
+    assert "test '$(cat $BUILDER_DIST_FILE)' = 'foo'" "Contents of '$BUILDER_DIST_FILE' do not match"
+  mock.popd
+
+  mock.deinit
+}
+
 # ###
 # #
 # ##
