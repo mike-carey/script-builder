@@ -36,11 +36,14 @@ test_builder_BUILDER_DIST_FILE_variable_is_exported() {
   mock.init
 
   mock.lib
+  mock.tmp "output"
+  local _output=$MOCKFILE
 
   mock.pushd
-    builder "-" > /dev/null
+    builder - > $_output
 
     assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "test '${BUILDER_DIST_FILE}' = '$(cat $_output)'" 'BUILDER_DIST_FILE does not match the printed content'
   mock.popd
 
   mock.deinit
@@ -53,11 +56,14 @@ test_builder_BUILDER_DIST_FILES_variable_is_exported() {
   mock.init
 
   mock.lib "build.sh"
+  mock.tmp "output"
+  local _output=$MOCKFILE
 
   mock.pushd
-    builder "lib/build.sh" > /dev/null
+    builder "lib/build.sh" > $_output
 
     assert "test -n '${BUILDER_DIST_FILES+x}'" 'BUILDER_DIST_FILES is not set'
+    assert "test '${BUILDER_DIST_FILES}' = '$(cat $_output)'" 'BUILDER_DIST_FILES does not match the printed content'
   mock.popd
 
   mock.deinit
