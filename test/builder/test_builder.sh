@@ -5,7 +5,7 @@ source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"/src/builder/bui
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/call.sh
 source "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"/_utils/mock.sh
 
-declare -r __UNSET__=( BUILDER_DIST BUILDER_UTIL BUILDER_LIB BUILDER_EXT BUILDER_DIST_FILE BUILDER_DIST_FILES )
+declare -r __UNSET__=( BUILDER_DIST BUILDER_UTIL BUILDER_LIB BUILDER_EXT BUILDER_DIST_FILE BUILDER_DIST_FILES TEST_BUILDER_EXT )
 
 setup() {
   for i in ${__UNSET__[@]}; do
@@ -16,7 +16,7 @@ setup() {
     if [ ! -d "$1" ]; then
       echo ''
     else
-      echo $( find "$1" -name "*${BUILDER_EXT:-.sh}" )
+      echo $( find "$1" -name "*${TEST_BUILDER_EXT:-.sh}" )
     fi
   }
   concat() {
@@ -288,6 +288,8 @@ test_builder_change_dist_directory_via_environment_variable() {
 test_builder_change_ext_directory_via_environment_variable() {
   local _ext=.py
 
+  export TEST_BUILDER_EXT="$_ext"
+
   mock.init
 
   mock.lib "foo.py" "foo"
@@ -347,6 +349,102 @@ test_builder_change_util_directory_via_environment_variable() {
 
   mock.pushd
     BUILDER_UTIL="$_util" builder - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the util directory via option changes dist destination.
+##
+test_builder_change_dist_directory_via_option() {
+  local _dest=out
+
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+  mock.lib "bar.sh" "bar"
+
+  mock.pushd
+    builder --dist "$_dest" - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "test '$( dirname "$BUILDER_DIST_FILE" )' = '$_dest'" "Directory ($( dirname "$BUILDER_DIST_FILE" )) is not '$_dest'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the util directory via option changes ext checks.
+##
+test_builder_change_ext_directory_via_option() {
+  local _ext=.py
+
+  export TEST_BUILDER_EXT="$_ext"
+
+  mock.init
+
+  mock.lib "foo.py" "foo"
+  mock.lib "bar.py" "bar"
+
+  mock.tmp "expected" "bar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    builder --ext "$_ext" - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the lib directory via environment changes lib loading.
+##
+test_builder_change_lib_directory_via_option() {
+  local _lib=src
+
+  mock.init
+
+  mock.src "foo.sh" "foo"
+  mock.src "bar.sh" "bar"
+
+  mock.tmp "expected" "bar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    builder --lib "$_lib" - > /dev/null
+
+    assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
+    assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
+  mock.popd
+
+  mock.deinit
+}
+
+###
+# Checks that changing the util directory via environment changes util loading.
+##
+test_builder_change_util_directory_via_option() {
+  local _util=lib-exec
+
+  mock.init
+
+  mock.lib "foo.sh" "foo"
+  mock.lib "bar.sh" "bar"
+  mock.dir lib-exec "util.sh" "util"
+
+  mock.tmp "expected" "util\nbar\nfoo"
+  local _expected=$MOCKFILE
+
+  mock.pushd
+    builder --util "$_util" - > /dev/null
 
     assert "test -n '${BUILDER_DIST_FILE+x}'" 'BUILDER_DIST_FILE is not set'
     assert "diff -w '$BUILDER_DIST_FILE' '$_expected'" "File contents do not match: '$BUILDER_DIST_FILE' <> '$_expected'"
