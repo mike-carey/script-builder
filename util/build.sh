@@ -33,7 +33,7 @@ util.build() {
       _args="$OUT/$_name.sh $( find "$_dir" -name '*.sh' )"
 
       local _tmp=$(mktemp)
-      echo -e "${APPEND/\{\{FUNCTION\}\}/$_name}" > "$_tmp"
+      echo -e "${APPEND//\{\{FUNCTION\}\}/$_name}" > "$_tmp"
       _args+=" $_tmp"
 
       concat $_args

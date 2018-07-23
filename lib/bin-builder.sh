@@ -48,7 +48,7 @@ function bin-builder ()
 if [[ ${BASH_SOURCE[0]} != $0 ]]; then
     export -f bin-builder;
 else
-    {{FUNCTION}} "${@}";
+    bin-builder "${@}";
     exit $?;
 fi
 

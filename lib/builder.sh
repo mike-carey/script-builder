@@ -1,8 +1,8 @@
 #!/usr/bin/env bash 
-function builder ()
-{
-    function builder._log ()
-    {
+function builder () 
+{ 
+    function builder._log () 
+    { 
         if [ -n "${BUILDER_VERBOSE+x}" ]; then
             echo -e "[DEBUG](builder) $@" 1>&2;
         fi
@@ -13,7 +13,7 @@ function builder ()
     local _ext="${BUILDER_EXT:-.sh}";
     local _single_file=;
     while :; do
-        case "$1" in
+        case "$1" in 
             --dist)
                 _dist="$2";
                 shift;
@@ -63,7 +63,7 @@ function builder ()
     local -a _utils=($( builder.find "$_util" "*$_ext" ));
     if [ ${#_files[@]} -eq 0 ]; then
         if [ ! -d $_lib ]; then
-            {
+            { 
                 echo "When no files are provided, the lib directory is required";
                 echo "Please set the lib directory via \`--lib\` option or the \`BUILDER_LIB\` variable"
             } 1>&2;
@@ -99,8 +99,8 @@ function builder ()
     fi;
     return 0
 };
-function builder.find ()
-{
+function builder.find () 
+{ 
     local _dir="$1";
     local _name="$2";
     if [ -z "$_dir" -o -z "$_name" ]; then
@@ -117,10 +117,10 @@ function builder.find ()
     echo "${_value[@]}";
     return 0
 };
-function concat ()
-{
-    function concat.usage ()
-    {
+function concat () 
+{ 
+    function concat.usage () 
+    { 
         echo "Usage: concat [--comment] OUTPUT INPUT...";
         echo "  --comment   Adds comments";
         echo "  OUPUT       The output file";
@@ -128,7 +128,7 @@ function concat ()
     };
     local _comment=1;
     while :; do
-        case "$1" in
+        case "$1" in 
             --comment)
                 _comment=0;
                 shift
@@ -204,6 +204,7 @@ fi;
 if [[ ${BASH_SOURCE[0]} != $0 ]]; then
     export -f builder;
 else
-    {{FUNCTION}} "${@}";
+    builder "${@}";
     exit $?;
 fi
+
